@@ -119,36 +119,35 @@
 <script>
   // list your images here, in the order you want them attempted
   const images = [
-    "bird.jpg",
-    "statue.jpg",
-    "generalelectric.jpg",
-    "church.jpg",
-    "fishing.jpg",
-    "revere.jpg",
-    "watertower.jpg",
-    "capfloor.jpg",
-    "canal.jpg",
-    "trainone.jpg",
-    "traintwo.jpg",
-    "lakescape.jpg",
-    "capstair.jpg",
-    "road.jpg",
-    "sunset.jpg",
-    "me.jpg",
-    "capwide.jpg",
-    "catshadow.jpg",
-    "deer.jpg",
-    "catyawn.jpg",
-    "photovert.jpg",
-    "generalelectrictwo.jpg",
-    "cop.jpg",
-    "catlay.jpg",
-    "grave.jpg",
-    "food.jpg",
-    "shock.jpg",
-    "lord.jpg",
-    "look.jpg"
-
+    "cimage/bird.jpg",
+    "cimage/statue.jpg",
+    "cimage/generalelectric.jpg",
+    "cimage/church.jpg",
+    "cimage/fishing.jpg",
+    "cimage/revere.jpg",
+    "cimage/watertower.jpg",
+    "cimage/capfloor.jpg",
+    "cimage/canal.jpg",
+    "cimage/trainone.jpg",
+    "cimage/traintwo.jpg",
+    "cimage/lakescape.jpg",
+    "cimage/capstair.jpg",
+    "cimage/road.jpg",
+    "cimage/sunset.jpg",
+    "cimage/me.jpg",
+    "cimage/capwide.jpg",
+    "cimage/catshadow.jpg",
+    "cimage/deer.jpg",
+    "cimage/catyawn.jpg",
+    "cimage/photovert.jpg",
+    "cimage/generalelectrictwo.jpg",
+    "cimage/cop.jpg",
+    "cimage/catlay.jpg",
+    "cimage/grave.jpg",
+    "cimage/food.jpg",
+    "cimage/shock.jpg",
+    "cimage/lord.jpg",
+    "cimage/look.jpg"
   ];
 
   function columnCountForWidth(){
@@ -173,20 +172,30 @@
       cols.push(col);
     }
 
-    let loaded = 0;
+    // preload every image first, so we know every image's real
+    // dimensions before placing anything — this guarantees photos
+    // always get placed in the exact order they're listed, instead
+    // of whichever one happens to finish downloading first
+    const preloads = images.map(src => {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.src = src;
+        if (img.complete && img.naturalWidth){
+          resolve(img);
+        } else {
+          img.addEventListener('load', () => resolve(img));
+          img.addEventListener('error', () => resolve(img));
+        }
+      });
+    });
 
-    images.forEach(src => {
-      const slot = document.createElement('div');
-      slot.className = 'slot';
+    Promise.all(preloads).then(loadedImages => {
+      loadedImages.forEach(img => {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.appendChild(img);
 
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = '';
-
-      slot.appendChild(img);
-
-      const place = () => {
-        // find the shortest column so far, place this image there in order
+        // find the shortest column so far, place this image there
         let shortest = 0;
         for (let i = 1; i < colHeights.length; i++){
           if (colHeights[i] < colHeights[shortest]) shortest = i;
@@ -198,19 +207,12 @@
           ? img.naturalHeight / img.naturalWidth
           : 1;
         colHeights[shortest] += colWidth * ratio;
-      };
 
-      if (img.complete && img.naturalWidth){
-        place();
-      } else {
-        img.addEventListener('load', place);
-        img.addEventListener('error', place);
-      }
-
-      img.addEventListener('click', () => {
-        if (!img.src) return;
-        document.getElementById('lightbox-img').src = img.src;
-        document.getElementById('lightbox').classList.add('open');
+        img.addEventListener('click', () => {
+          if (!img.src) return;
+          document.getElementById('lightbox-img').src = img.src;
+          document.getElementById('lightbox').classList.add('open');
+        });
       });
     });
   }

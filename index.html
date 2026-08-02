@@ -148,9 +148,8 @@
     "cimage/shock.jpg",
     "cimage/lord.jpg",
     "cimage/look.jpg"
-
   ];
-  
+
   function columnCountForWidth(){
     const w = window.innerWidth;
     if (w <= 560) return 2;
@@ -173,20 +172,30 @@
       cols.push(col);
     }
 
-    let loaded = 0;
+    // preload every image first, so we know every image's real
+    // dimensions before placing anything — this guarantees photos
+    // always get placed in the exact order they're listed, instead
+    // of whichever one happens to finish downloading first
+    const preloads = images.map(src => {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.src = src;
+        if (img.complete && img.naturalWidth){
+          resolve(img);
+        } else {
+          img.addEventListener('load', () => resolve(img));
+          img.addEventListener('error', () => resolve(img));
+        }
+      });
+    });
 
-    images.forEach(src => {
-      const slot = document.createElement('div');
-      slot.className = 'slot';
+    Promise.all(preloads).then(loadedImages => {
+      loadedImages.forEach(img => {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.appendChild(img);
 
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = '';
-
-      slot.appendChild(img);
-
-      const place = () => {
-        // find the shortest column so far, place this image there in order
+        // find the shortest column so far, place this image there
         let shortest = 0;
         for (let i = 1; i < colHeights.length; i++){
           if (colHeights[i] < colHeights[shortest]) shortest = i;
@@ -198,19 +207,12 @@
           ? img.naturalHeight / img.naturalWidth
           : 1;
         colHeights[shortest] += colWidth * ratio;
-      };
 
-      if (img.complete && img.naturalWidth){
-        place();
-      } else {
-        img.addEventListener('load', place);
-        img.addEventListener('error', place);
-      }
-
-      img.addEventListener('click', () => {
-        if (!img.src) return;
-        document.getElementById('lightbox-img').src = img.src;
-        document.getElementById('lightbox').classList.add('open');
+        img.addEventListener('click', () => {
+          if (!img.src) return;
+          document.getElementById('lightbox-img').src = img.src;
+          document.getElementById('lightbox').classList.add('open');
+        });
       });
     });
   }
