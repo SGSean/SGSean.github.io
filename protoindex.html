@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Truesight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0; padding:0; box-sizing:border-box;}
+
+  body{
+    background:#0d0d0c;
+  }
+
+  header{
+    padding:2.6rem 1rem 1.6rem;
+    text-align:center;
+  }
+
+  header h1{
+    font-family:'Cormorant SC', serif;
+    font-weight:600;
+    font-size:clamp(2rem, 6vw, 3.4rem);
+    letter-spacing:0.14em;
+    color:#f3f1ec;
+    text-transform:uppercase;
+  }
+
+  header .socials{
+    margin-top:0.8rem;
+    display:flex;
+    justify-content:center;
+    gap:1.4rem;
+  }
+
+  header .socials a{
+    font-family:'Cormorant SC', serif;
+    font-size:0.85rem;
+    letter-spacing:0.1em;
+    color:#93897a;
+    text-transform:uppercase;
+    text-decoration:none;
+    transition:color 0.25s ease;
+  }
+
+  header .socials a:hover{
+    color:#f3f1ec;
+  }
+
+  .wall{
+    display:flex;
+    align-items:flex-start;
+    gap:4px;
+    padding:0 4px 4px;
+  }
+
+  .col{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    flex:1;
+    min-width:0;
+  }
+
+  .slot{
+    background:#1a1a18;
+    cursor:zoom-in;
+  }
+
+  .slot img{
+    width:100%;
+    display:block;
+  }
+
+  .lightbox{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.92);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+    z-index:100;
+    cursor:zoom-out;
+    padding:2rem;
+  }
+
+  .lightbox.open{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .lightbox img{
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Truesight</h1>
+  <div class="socials">
+    <a href="https://x.com/SeanNuevaYork" target="_blank" rel="noopener">Twitter</a>
+    <a href="https://instagram.com/truesight888" target="_blank" rel="noopener">Instagram</a>
+  </div>
+</header>
+
+<div class="wall" id="wall"></div>
+<img src="bird.jpg" style="width:300px; display:block;">
+<div class="lightbox" id="lightbox">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+  // list your images here, in the order you want them attempted
+  const images = [
+    "bird.jpg",
+    "generalelectric.jpg",
+    "statue.jpg",
+    "church.jpg",
+    "fishing.jpg",
+    "revere.jpg",
+    "canal.jpg",
+    "trainone.jpg",
+    "traintwo.jpg",
+    "watertower.jpg",
+    "lakescape.jpg",
+    "road.jpg",
+    "sunset.jpg",
+    "me.jpg"
+  ];
+
+  function columnCountForWidth(){
+    const w = window.innerWidth;
+    if (w <= 560) return 2;
+    if (w <= 900) return 3;
+    return 4;
+  }
+
+  function buildWall(){
+    const wall = document.getElementById('wall');
+    wall.innerHTML = '';
+
+    const colCount = columnCountForWidth();
+    const cols = [];
+    const colHeights = new Array(colCount).fill(0);
+
+    for (let i = 0; i < colCount; i++){
+      const col = document.createElement('div');
+      col.className = 'col';
+      wall.appendChild(col);
+      cols.push(col);
+    }
+
+    let loaded = 0;
+
+    images.forEach(src => {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      img.loading = 'lazy';
+
+      slot.appendChild(img);
+
+      const place = () => {
+        // find the shortest column so far, place this image there in order
+        let shortest = 0;
+        for (let i = 1; i < colHeights.length; i++){
+          if (colHeights[i] < colHeights[shortest]) shortest = i;
+        }
+        cols[shortest].appendChild(slot);
+
+        const colWidth = cols[shortest].getBoundingClientRect().width || 1;
+        const ratio = (img.naturalHeight && img.naturalWidth)
+          ? img.naturalHeight / img.naturalWidth
+          : 1;
+        colHeights[shortest] += colWidth * ratio;
+      };
+
+      if (img.complete && img.naturalWidth){
+        place();
+      } else {
+        img.addEventListener('load', place);
+        img.addEventListener('error', place);
+      }
+
+      img.addEventListener('click', () => {
+        if (!img.src) return;
+        document.getElementById('lightbox-img').src = img.src;
+        document.getElementById('lightbox').classList.add('open');
+      });
+    });
+  }
+
+  buildWall();
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(buildWall, 200);
+  });
+
+  const lightbox = document.getElementById('lightbox');
+  lightbox.addEventListener('click', () => {
+    lightbox.classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape'){
+      lightbox.classList.remove('open');
+      document.getElementById('lightbox-img').src = '';
+    }
+  });
+</script>
+
+</body>
+</html>
