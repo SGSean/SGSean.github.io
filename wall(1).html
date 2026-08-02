@@ -219,10 +219,17 @@
 
   buildWall();
 
+  let currentColCount = columnCountForWidth();
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(buildWall, 200);
+    resizeTimer = setTimeout(() => {
+      const newColCount = columnCountForWidth();
+      if (newColCount !== currentColCount){
+        currentColCount = newColCount;
+        buildWall();
+      }
+    }, 200);
   });
 
   const lightbox = document.getElementById('lightbox');
